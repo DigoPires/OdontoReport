@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String         @id @default(uuid())
+  googleId    String         @unique
+  email       String         @unique
+  name        String
+  avatarUrl   String?
+  createdAt   DateTime       @default(now())
+  settings    UserSettings?
+  reports     Report[]
+}
+
+model UserSettings {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clinicName       String?
+  logoUrl          String?
+  primaryColor     String   @default("#2563EB")
+  socialInstagram  String?
+  socialWhatsapp   String?
+  socialGoogle     String?
+  socialWebsite    String?
+  layoutTemplate   String   @default("padrao")
+  updatedAt        DateTime @updatedAt
+}
+
+model Report {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patientName String
+  tooth       String
+  date        DateTime
+  diagnosis   String
+  formData    Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
