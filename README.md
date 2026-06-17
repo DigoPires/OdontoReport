@@ -1,24 +1,71 @@
 # OdontoReport
 
-Sistema inteligente de geração de relatórios endodônticos com autenticação Google, banco de dados PostgreSQL, e suporte multi-usuário. Permite criar, editar, gerar PDFs e importar dados de relatórios existentes de forma simplificada.
+Sistema completo de geração e gerenciamento de relatórios endodônticos com autenticação Google, multi-usuário, dashboard personalizado e suporte a imagens. Permite criar, editar, gerar PDFs, importar dados e configurar a clínica de forma integrada.
 
-## � Descrição
+## 📋 Descrição
 
-OdontoReport é uma aplicação web completa para dentistas endodontistas que simplifica o processo de criação e gerenciamento de relatórios clínicos. Com interface intuitiva e recursos avançados como importação de PDFs, geração automática de conduta e suporte a imagens, o sistema ajuda profissionais a documentar casos de forma eficiente e profissional.
+OdontoReport é uma aplicação web moderna para dentistas que oferece uma solução completa para documentação clínica. Com interface intuitiva, dashboard personalizado, geração de PDFs, importação de relatórios e sistema de configurações, o aplicativo ajuda profissionais a gerenciar casos de forma eficiente, profissional e organizada.
 
-## �🚀 Tecnologias
+## 🚀 Tecnologias
 
 - **Next.js 16** com App Router e Turbopack
 - **NextAuth.js** com Google OAuth
-- **PostgreSQL** via Neon
-- **Prisma ORM**
+- **PostgreSQL** via Prisma ORM
 - **TypeScript**
 - **Tailwind CSS v4**
 - **Puppeteer** para geração de PDF
 - **Sharp** para processamento de imagens
 - **unpdf** para extração de dados de PDFs
 
-## Configuração
+## 📁 Estrutura do Projeto
+
+```
+src/
+├── app/
+│   ├── api/              # API Routes (auth, relatórios, configurações)
+│   ├── configuracoes/    # Página de configurações da clínica
+│   ├── dashboard/        # Dashboard principal
+│   ├── login/            # Página de login
+│   ├── relatorio/        # Páginas de relatórios
+│   └── suporte/          # Página de suporte
+├── components/           # Componentes reutilizáveis
+├── contexts/             # Contextos (Toast)
+├── lib/                  # Utilitários (auth, prisma)
+└── types/                # Tipos TypeScript
+
+prisma/                   # Schema e migrations do banco de dados
+public/                   # Arquivos estáticos
+```
+
+## 🔧 Scripts Disponíveis
+
+```bash
+npm run dev         # Inicia servidor de desenvolvimento (http://localhost:3000)
+npm run build       # Compila para produção
+npm start          # Inicia servidor de produção
+npm run lint       # Executa linter ESLint
+npm run postinstall # Regenera cliente Prisma (executado automaticamente após npm install)
+```
+
+> ⚠️ **Importante:** O script `postinstall` é essencial para CI/CD (Render, Vercel, etc.). Ele regenera o cliente Prisma após `npm install`, evitando erros de tipos TypeScript na build.
+
+## 🌟 Recursos Principais
+
+- ✅ Autenticação Google OAuth
+- ✅ Dashboard personalizado com estatísticas
+- ✅ Gerenciamento de relatórios (CRUD completo)
+- ✅ Geração de PDF com Puppeteer
+- ✅ Importação de relatórios via PDF
+- ✅ Configurações personalizáveis da clínica
+- ✅ Suporte a logotipo, cores e links de redes sociais
+- ✅ Odontometria dinâmica com múltiplos canais
+- ✅ Upload de imagens com preview
+- ✅ Interface responsiva com Tailwind CSS
+- ✅ Multi-usuário com autenticação segura
+- ✅ Aviso de alterações não salvas
+- ✅ Modais de confirmação para ações críticas
+
+## ⚙️ Configuração
 
 ### 1. Instalar dependências
 
@@ -61,7 +108,15 @@ npm run dev
 
 Acesse [http://localhost:3000](http://localhost:3000)
 
-## Compartilhando via ngrok
+## 🚀 Deploy em Produção (Render)
+
+1. Conecte seu repositório GitHub ao Render
+2. Configure as variáveis de ambiente no Render
+3. Configure o comando de build como `npm run build`
+4. Configure o comando de start como `npm start`
+5. O script `postinstall` executará automaticamente durante `npm install`
+
+## 📡 Compartilhando via ngrok (Testes Externos)
 
 Para compartilhar o projeto via ngrok (para testes externos ou demonstração):
 
@@ -95,69 +150,46 @@ Para compartilhar o projeto via ngrok (para testes externos ou demonstração):
 
 7. Compartilhe a URL do ngrok — o login funcionará corretamente
 
-**Notas importantes:**
-- A URL do ngrok muda toda vez que o ngrok é reiniciado (a menos que use um domínio estático pago). Os passos 3-6 devem ser repetidos a cada vez.
-- Nunca commit a URL do ngrok no `.env` — é temporário. Mantenha `.env.local` no `.gitignore`.
-- Se usar ngrok com domínio estático (plano paga), a URL é fixa e só precisa ser configurada uma vez.
+**Notas:**
+- A URL do ngrok muda quando reiniciado (a menos que use plano pago com domínio estático)
+- Mantenha `.env.local` no `.gitignore`
 
-## Estrutura do Projeto
-
-```
-src/
-├── app/
-│   ├── api/
-│   │   ├── auth/[...nextauth]/    # Configuração NextAuth
-│   │   ├── configuracoes/         # API de configurações
-│   │   └── relatorio/             # API de relatórios
-│   ├── configuracoes/             # Página de configurações
-│   ├── dashboard/                 # Dashboard com lista de relatórios
-│   ├── login/                     # Página de login
-│   ├── relatorio/
-│   │   ├── novo/                  # Formulário novo relatório
-│   │   └── [id]/                  # Visualização/edição de relatório
-│   ├── layout.tsx                 # Layout raiz
-│   ├── page.tsx                   # Página inicial (redirect)
-│   └── globals.css               # Estilos globais
-├── components/
-│   ├── Providers.tsx              # SessionProvider
-│   ├── ProtectedRoute.tsx        # Middleware de rota protegida
-│   └── Sidebar.tsx                # Componente de sidebar
-├── lib/
-│   ├── auth.ts                    # Configuração NextAuth
-│   └── prisma.ts                  # Cliente Prisma
-└── types/
-    └── next-auth.d.ts             # Tipos NextAuth
-```
-
-## Funcionalidades
-
-- ✅ Autenticação com Google OAuth
-- ✅ Dashboard com lista de relatórios
-- ✅ Formulário completo de relatório endodôntico
-- ✅ Odontometria dinâmica com múltiplos canais
-- ✅ Upload de imagens com preview
-- ✅ Geração manual de conduta com botão "Gerar Preview"
-- ✅ Geração de PDF com Puppeteer
-- ✅ Importação de dados de PDF existente
-- ✅ Configurações personalizáveis (clínica, logo, cores)
-- ✅ Suporte multi-usuário com isolamento de dados
-- ✅ Aviso de alterações não salvas ao navegar
-- ✅ Design responsivo
-- ✅ Modais de confirmação para ações críticas
-
-## Rotas
+## 🛣️ Rotas da Aplicação
 
 - `/` - Redireciona para login ou dashboard
 - `/login` - Página de login com Google
 - `/dashboard` - Dashboard com lista de relatórios
-- `/configuracoes` - Configurações do usuário
+- `/configuracoes` - Configurações do usuário e clínica
 - `/relatorio/novo` - Formulário para novo relatório
-- `/relatorio/[id]` - Visualização de relatório existente
+- `/relatorio/[id]` - Visualização/edição de relatório existente
+- `/suporte` - Página de suporte
 
-## API Routes
+## 📡 API Routes
 
 - `GET/POST /api/relatorio` - Listar/criar relatórios
 - `GET/PUT/DELETE /api/relatorio/[id]` - Operações em relatório específico
 - `GET/PUT /api/configuracoes` - Configurações do usuário
 - `POST /api/relatorio/gerar-pdf` - Gerar PDF
 - `POST /api/relatorio/importar` - Importar dados de PDF
+- `GET/POST /api/auth/[...nextauth]` - Autenticação NextAuth
+
+## 🛠️ Desenvolvimento
+
+### Prisma ORM
+
+- Schema: `prisma/schema.prisma`
+- Gerar tipos: `npx prisma generate`
+- Criar migração: `npx prisma migrate dev --name <name>`
+- Reset BD: `npx prisma migrate reset`
+
+### TypeScript
+
+Todos os tipos são validados em tempo de build. Execute `npm run build` para verificar erros TypeScript.
+
+## 📝 Licença
+
+MIT
+
+## 👨‍💻 Autor
+
+Desenvolvido como solução completa para gerenciamento de relatórios endodônticos.
