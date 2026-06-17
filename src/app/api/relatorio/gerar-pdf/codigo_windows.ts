@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium';
+import puppeteer from 'puppeteer';
 import sharp from 'sharp';
 
 const escapeHTML = (str: string) => {
@@ -525,25 +524,16 @@ export async function POST(req: NextRequest) {
 
     // Generate PDF
     let browser;
-
     try {
       browser = await puppeteer.launch({
-        executablePath: await chromium.executablePath(),
         headless: true,
-        args: [
-          ...chromium.args,
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-        ],
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
       });
 
       const page = await browser.newPage();
-
       const html = generateHTML(data, settings);
 
-      await page.setContent(html, {
-        waitUntil: 'load',
-      });
+      await page.setContent(html, { waitUntil: 'load' });
 
       const pdfBuffer = await page.pdf({
         format: 'A4',
@@ -561,10 +551,7 @@ export async function POST(req: NextRequest) {
       return new NextResponse(Buffer.from(pdfBuffer), {
         headers: {
           'Content-Type': 'application/pdf',
-          'Content-Disposition':
-            `attachment; filename=relatorio-${
-              data.paciente?.toString().replace(/\s+/g, '-')
-            }-${data.data}.pdf`,
+          'Content-Disposition': `attachment; filename=relatorio-${data.paciente?.toString().replace(/\s+/g, '-')}-${data.data}.pdf`,
         },
       });
     } catch (error) {
