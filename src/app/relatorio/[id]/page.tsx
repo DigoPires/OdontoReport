@@ -48,18 +48,18 @@ export default function EditRelatorioPage() {
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Helper function to get current date in UTC-3 (Brasília)
-  const getUTC3Date = () => {
-    const now = new Date();
-    const utc3Date = new Date(now.getTime() + (3 * 60 * 60 * 1000)); // Add 3 hours to get UTC-3
-    return utc3Date.toISOString().split('T')[0];
+  // Helper function to get current date in Brasília timezone
+  const getBrasiliaDate = () => {
+    return new Date().toLocaleDateString('en-CA', {
+      timeZone: 'America/Sao_Paulo',
+    });
   };
 
   // Form state
   const [formData, setFormData] = useState({
     paciente: '',
     indicador: '',
-    data: getUTC3Date(),
+    data: getBrasiliaDate(),
     dente: '',
     diagnostico: '',
     anestesico: '',
@@ -126,7 +126,7 @@ export default function EditRelatorioPage() {
       setFormData({
         paciente: reportData.paciente || data.patientName || '',
         indicador: reportData.indicador || '',
-        data: reportData.data || data.date?.split('T')[0] || new Date().toISOString().split('T')[0],
+        data: reportData.data || data.date?.split('T')[0] || getBrasiliaDate(),
         dente: reportData.dente || data.tooth || '',
         diagnostico: reportData.diagnostico || data.diagnosis || '',
         anestesico: reportData.anestesico || '',
@@ -433,7 +433,7 @@ export default function EditRelatorioPage() {
     setFormData({
       paciente: reportData.paciente || report.patientName || '',
       indicador: reportData.indicador || '',
-      data: reportData.data || report.date?.split('T')[0] || new Date().toISOString().split('T')[0],
+      data: reportData.data || report.date?.split('T')[0] || getBrasiliaDate(),
       dente: reportData.dente || report.tooth || '',
       diagnostico: reportData.diagnostico || report.diagnosis || '',
       anestesico: reportData.anestesico || '',

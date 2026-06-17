@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate && npx puppeteer browsers install chrome"
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
@@ -16,7 +16,7 @@
     "next": "16.2.9",
     "next-auth": "^4.24.14",
     "pdf-lib": "^1.17.1",
-    "puppeteer": "^25.1.0",
+    "pdfmake": "^0.2.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "sharp": "^0.35.1",

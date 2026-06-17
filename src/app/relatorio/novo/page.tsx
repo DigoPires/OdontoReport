@@ -37,18 +37,18 @@ export default function NovoRelatorioPage() {
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
   
-  // Helper function to get current date in UTC-3 (Brasília)
-  const getUTC3Date = () => {
-    const now = new Date();
-    const utc3Date = new Date(now.getTime() + (3 * 60 * 60 * 1000)); // Add 3 hours to get UTC-3
-    return utc3Date.toISOString().split('T')[0];
+  // Helper function to get current date in Brasília timezone
+  const getBrasiliaDate = () => {
+    return new Date().toLocaleDateString('en-CA', {
+      timeZone: 'America/Sao_Paulo',
+    });
   };
   
   // Form state
   const [formData, setFormData] = useState({
     paciente: '',
     indicador: '',
-    data: getUTC3Date(),
+    data: getBrasiliaDate(),
     dente: '',
     diagnostico: '',
     anestesico: '',
@@ -433,7 +433,7 @@ export default function NovoRelatorioPage() {
     setFormData({
       paciente: '',
       indicador: '',
-      data: getUTC3Date(),
+      data: getBrasiliaDate(),
       dente: '',
       diagnostico: '',
       anestesico: '',
