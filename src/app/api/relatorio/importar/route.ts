@@ -99,8 +99,8 @@ export async function POST(req: NextRequest) {
         .replace(/\.$/, '');
     }
 
-    // Extract odontometria
-    const odontometriaMatches = text.matchAll(/Canal\s*(\d+):\s*(.+?)(?=\n|$)/g);
+    // Extract odontometria - fix to properly separate channels
+    const odontometriaMatches = text.matchAll(/Canal\s*(\d+):\s*(.+?)(?=\s*Canal\s*\d+:|$)/gi);
     for (const match of odontometriaMatches) {
       const canalNum = match[1];
       const measurementsStr = match[2].trim();

@@ -40,13 +40,6 @@ export default function Modal({
 
   if (!isOpen) return null;
 
-  const typeColors = {
-    info: 'border-blue-500',
-    success: 'border-green-500',
-    warning: 'border-yellow-500',
-    danger: 'border-red-500',
-  };
-
   const typeIcons = {
     info: (
       <svg className="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -70,9 +63,21 @@ export default function Modal({
     ),
   };
 
+  // Determine if this is an informational modal (no confirmation action)
+  const isInformational = !onConfirm && !onDiscard;
+  const closeButtonText = isInformational ? 'Fechar' : cancelText;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0, 0, 0, 0.5)' }}>
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full border-t-4 {typeColors[type]} relative">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full {typeColors[type]} relative">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
         <div className="p-6">
           <div className="flex items-start">
             <div className="flex-shrink-0">
@@ -85,12 +90,14 @@ export default function Modal({
           </div>
         </div>
         <div className="bg-gray-50 px-6 py-4 rounded-b-lg flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            {cancelText}
-          </button>
+          {!isInformational && (
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              {cancelText}
+            </button>
+          )}
           {onDiscard && (
             <button
               onClick={() => {
@@ -116,6 +123,14 @@ export default function Modal({
               }`}
             >
               {confirmText}
+            </button>
+          )}
+          {isInformational && (
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              {closeButtonText}
             </button>
           )}
         </div>

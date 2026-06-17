@@ -31,6 +31,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Ensure user exists (after database reset)
+    let user =
+      (await prisma.user.findUnique({ where: { id: session.user.id } })) ||
+      (await prisma.user.findUnique({ where: { googleId: session.user.id } }));
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          id: session.user.id,
+          name: session.user.name || '',
+          email: session.user.email || '',
+          googleId: session.user.id,
+        },
+      });
+    }
+
     const body = await req.json();
     const { paciente, dente, data, diagnostico, formData } = body;
 
@@ -40,7 +56,7 @@ export async function POST(req: NextRequest) {
 
     const report = await prisma.report.create({
       data: {
-        userId: session.user.id,
+        userId: user.id,
         patientName: paciente,
         tooth: dente,
         date: new Date(data),

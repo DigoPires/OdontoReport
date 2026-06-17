@@ -12,12 +12,20 @@ export async function GET() {
     }
 
     // Resolve authenticated user by id or Google id fallback
-    const user =
+    let user =
       (await prisma.user.findUnique({ where: { id: session.user.id } })) ||
       (await prisma.user.findUnique({ where: { googleId: session.user.id } }));
 
+    // Create user if not exists (after database reset)
     if (!user) {
-      return NextResponse.json({ error: 'User not found. Please logout and login again.' }, { status: 404 });
+      user = await prisma.user.create({
+        data: {
+          id: session.user.id,
+          name: session.user.name || '',
+          email: session.user.email || '',
+          googleId: session.user.id,
+        },
+      });
     }
 
     let settings = await prisma.userSettings.findUnique({
@@ -50,22 +58,36 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const user =
+    let user =
       (await prisma.user.findUnique({ where: { id: session.user.id } })) ||
       (await prisma.user.findUnique({ where: { googleId: session.user.id } }));
 
+    // Create user if not exists (after database reset)
     if (!user) {
-      return NextResponse.json({ error: 'User not found. Please logout and login again.' }, { status: 404 });
+      user = await prisma.user.create({
+        data: {
+          id: session.user.id,
+          name: session.user.name || '',
+          email: session.user.email || '',
+          googleId: session.user.id,
+        },
+      });
     }
 
     const body = await req.json();
     const {
       clinicName,
       logoUrl,
+      logoSize,
       primaryColor,
       socialInstagram,
       socialWhatsapp,
       socialGoogle,
+      socialTwitter,
+      socialFacebook,
+      socialLinkedin,
+      socialTiktok,
+      socialYoutube,
       socialWebsite,
       layoutTemplate,
     } = body;
@@ -75,9 +97,15 @@ export async function PUT(req: NextRequest) {
       update: {
         clinicName,
         logoUrl,
+        logoSize: logoSize || '80',
         primaryColor,
         socialInstagram,
         socialWhatsapp,
+        socialTwitter,
+        socialFacebook,
+        socialLinkedin,
+        socialTiktok,
+        socialYoutube,
         socialGoogle,
         socialWebsite,
         layoutTemplate,
@@ -86,9 +114,15 @@ export async function PUT(req: NextRequest) {
         userId: user.id,
         clinicName,
         logoUrl,
+        logoSize: logoSize || '80',
         primaryColor: primaryColor || '#2563EB',
         socialInstagram,
         socialWhatsapp,
+        socialTwitter,
+        socialFacebook,
+        socialLinkedin,
+        socialTiktok,
+        socialYoutube,
         socialGoogle,
         socialWebsite,
         layoutTemplate: layoutTemplate || 'padrao',

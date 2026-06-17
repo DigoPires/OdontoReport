@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Sidebar from '@/components/Sidebar';
 import Modal from '@/components/Modal';
+import { useToast } from '@/contexts/ToastContext';
 
 interface Medicao {
   nome: string;
@@ -25,6 +26,7 @@ interface ImageItem {
 export default function NovoRelatorioPage() {
   const { data: session } = useSession();
   const router = useRouter();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -289,8 +291,12 @@ export default function NovoRelatorioPage() {
         })));
       }
       setHasUnsavedChanges(true);
+      
+      // Show info toast about images not being extracted from PDF
+      showToast('Importação concluída. Nota: Imagens não são extraídas do PDF automaticamente.', 'info');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao importar PDF');
+      showToast('Erro ao importar PDF', 'error');
     } finally {
       setLoading(false);
       if (pdfInputRef.current) pdfInputRef.current.value = '';
@@ -321,6 +327,23 @@ export default function NovoRelatorioPage() {
         if (img.file) {
           formDataToSend.append('images', img.file);
           formDataToSend.append('captions', img.caption);
+        } else if (img.preview) {
+          const [, base64Data] = img.preview.split(',');
+          const mimeMatch = img.preview.match(/^data:(image\/[^;]+);base64,/);
+          const mimeType = mimeMatch?.[1] || 'image/jpeg';
+          const byteCharacters = atob(base64Data || '');
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let j = 0; j < byteCharacters.length; j += 1) {
+            byteNumbers[j] = byteCharacters.charCodeAt(j);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const extension = mimeType.split('/')[1] || 'jpg';
+          const previewFile = new File([byteArray], `image-${i + 1}.${extension}`, { type: mimeType });
+          formDataToSend.append('images', previewFile);
+          formDataToSend.append('captions', img.caption);
+        } else {
+          formDataToSend.append('images', '');
+          formDataToSend.append('captions', '');
         }
       });
 
@@ -345,8 +368,10 @@ export default function NovoRelatorioPage() {
 
       // Show PDF success modal
       setShowPDFSuccessModal(true);
+      showToast('PDF gerado com sucesso!', 'success');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao gerar PDF');
+      showToast('Erro ao gerar PDF', 'error');
     } finally {
       setLoading(false);
     }
@@ -394,9 +419,11 @@ export default function NovoRelatorioPage() {
       // Show success modal instead of alert
       setShowSuccessModal(true);
       setHasUnsavedChanges(false);
+      showToast('Relatório salvo com sucesso!', 'success');
       // Don't reset form after saving
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao salvar relatório');
+      showToast('Erro ao salvar relatório', 'error');
     } finally {
       setSaving(false);
     }
@@ -442,7 +469,19 @@ export default function NovoRelatorioPage() {
   return (
     <ProtectedRoute>
       <div className="app-layout">
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <Sidebar 
+          isOpen={sidebarOpen} 
+          onClose={() => setSidebarOpen(false)}
+          hasUnsavedChanges={hasUnsavedChanges}
+          onNavigationAttempt={(path) => {
+            if (hasUnsavedChanges) {
+              setPendingNavigation(path);
+              setShowUnsavedModal(true);
+              return false;
+            }
+            return true;
+          }}
+        />
         <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} style={{ display: sidebarOpen ? 'block' : 'none' }}></div>
         <main className="main-content">
           {/* Header */}

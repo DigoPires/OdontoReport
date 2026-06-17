@@ -29,11 +29,17 @@ model UserSettings {
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   clinicName       String?
   logoUrl          String?
+  logoSize         String   @default("120")
   primaryColor     String   @default("#2563EB")
   socialInstagram  String?
   socialWhatsapp   String?
   socialGoogle     String?
   socialWebsite    String?
+  socialFacebook   String?
+  socialLinkedin   String?
+  socialTiktok     String?
+  socialYoutube    String?
+  socialTwitter    String?
   layoutTemplate   String   @default("padrao")
   updatedAt        DateTime @updatedAt
 }

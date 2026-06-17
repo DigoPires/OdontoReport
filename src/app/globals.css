@@ -889,6 +889,133 @@ select.with-icon {
   display: block;
 }
 
+/* ===== Table Actions Column ===== */
+.actions-column {
+  position: sticky;
+  right: 0;
+  background: inherit;
+  box-shadow: -2px 0 4px rgba(0,0,0,0.05);
+}
+
+.shadow-left {
+  box-shadow: -2px 0 4px rgba(0,0,0,0.05);
+}
+
+/* ===== Toast Animation ===== */
+@keyframes slide-in {
+  from {
+    transform: translateX(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+.toast-root {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  left: auto;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+  align-items: flex-end;
+  max-width: calc(100% - 48px);
+}
+
+.toast-item {
+  pointer-events: auto;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.16);
+}
+
+.toast-icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .toast-root {
+    bottom: 16px;
+    right: 16px;
+    left: 16px;
+    max-width: calc(100% - 32px);
+  }
+}
+
+/* ===== Sidebar Copyright ===== */
+.sidebar-copyright {
+  padding: 16px;
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: auto;
+}
+
+.sidebar-copyright a {
+  color: var(--gray-600);
+  font-size: 12px;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.sidebar-copyright a:hover {
+  color: var(--gray-400);
+}
+
+/* Hide Next.js development badge */
+.__nextjs-build-error-widget__,
+.__nextjs-dev-indicator__,
+.__nextjs-overlay {
+  display: none !important;
+}
+
+/* Cursor styles for interactive elements */
+button,
+a,
+input[type="submit"],
+.nav-link,
+.btn,
+.btn-logout,
+.mobile-menu-toggle,
+.sidebar-nav button,
+.form-group button,
+[type="button"],
+[role="button"] {
+  cursor: pointer !important;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="file"],
+input[type="date"],
+textarea,
+select {
+  cursor: text;
+}
+
+/* File input should have pointer cursor */
+input[type="file"] {
+  cursor: pointer !important;
+}
+
+/* Ensure all interactive elements have pointer cursor */
+*:where(button, a, [role="button"], [onclick]):not([disabled]) {
+  cursor: pointer !important;
+}
+
 /* ===== Responsive Enhancements ===== */
 @media (max-width: 640px) {
   :root {

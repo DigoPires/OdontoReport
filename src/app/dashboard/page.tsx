@@ -6,6 +6,7 @@ import Link from 'next/link';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Sidebar from '@/components/Sidebar';
 import Modal from '@/components/Modal';
+import { useToast } from '@/contexts/ToastContext';
 
 interface Report {
   id: string;
@@ -18,6 +19,7 @@ interface Report {
 
 export default function DashboardPage() {
   const { data: session } = useSession();
+  const { showToast } = useToast();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -60,12 +62,15 @@ export default function DashboardPage() {
         setReports(reports.filter((r) => r.id !== reportToDelete));
         setShowDeleteModal(false);
         setReportToDelete(null);
+        showToast('Relatório excluído com sucesso!', 'success');
       } else {
         setError('Erro ao excluir relatório');
+        showToast('Erro ao excluir relatório', 'error');
       }
     } catch (error) {
       console.error('Error deleting report:', error);
       setError('Erro ao excluir relatório');
+      showToast('Erro ao excluir relatório', 'error');
     }
   };
 
@@ -169,65 +174,78 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Paciente
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Dente
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Data
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Diagnóstico
-                      </th>
-                      <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Ações
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {filteredReports.map((report) => (
-                      <tr key={report.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            {report.patientName}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-600">{report.tooth}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-600">{formatDate(report.date)}</div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-600 max-w-xs truncate">
-                            {report.diagnosis}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex items-center justify-end gap-2">
-                            <Link
-                              href={`/relatorio/${report.id}`}
-                              className="text-blue-600 hover:text-blue-900 px-3 py-1 rounded hover:bg-blue-50 transition-colors"
-                            >
-                              Editar
-                            </Link>
-                            <button
-                              onClick={() => handleDelete(report.id)}
-                              className="text-red-600 hover:text-red-900 px-3 py-1 rounded hover:bg-red-50 transition-colors"
-                            >
-                              Excluir
-                            </button>
-                          </div>
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Paciente
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                          Dente
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                          Data do Atendimento
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                          Diagnóstico
+                        </th>
+                        <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Ações
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {filteredReports.map((report) => (
+                        <tr key={report.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {report.patientName}
+                            </div>
+                            <div className="text-xs text-gray-500 sm:hidden">
+                              {report.tooth} • {formatDate(report.date)}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                            <div className="text-sm text-gray-600">{report.tooth}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                            <div className="text-sm text-gray-600">{formatDate(report.date)}</div>
+                          </td>
+                          <td className="px-6 py-4 hidden sm:table-cell">
+                            <div className="text-sm text-gray-600 max-w-xs truncate">
+                              {report.diagnosis}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex items-center justify-end gap-2">
+                              <Link
+                                href={`/relatorio/${report.id}`}
+                                className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-blue-600 border border-blue-600 rounded-md hover:bg-blue-600 hover:text-white transition-colors"
+                              >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                                <span className="hidden sm:inline">Editar</span>
+                              </Link>
+                              <button
+                                onClick={() => handleDelete(report.id)}
+                                className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 border border-red-600 rounded-md hover:bg-red-600 hover:text-white transition-colors"
+                              >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                                  <polyline points="3,6 5,6 21,6" />
+                                  <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                                </svg>
+                                <span className="hidden sm:inline">Excluir</span>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>

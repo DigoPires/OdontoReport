@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { useToast } from '@/contexts/ToastContext';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -35,6 +36,7 @@ export default function EditRelatorioPage() {
   const { data: session } = useSession();
   const router = useRouter();
   const params = useParams();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,12 +82,30 @@ export default function EditRelatorioPage() {
   const [touched, setTouched] = useState<Set<string>>(new Set());
   const [dirty, setDirty] = useState<Set<string>>(new Set());
 
+  const [reports, setReports] = useState<Report[]>([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [reportToDelete, setReportToDelete] = useState<string | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchReport();
-  }, [params.id]);
+
+    // Browser navigation guard for unsaved changes
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [params.id, hasUnsavedChanges]);
 
   const fetchReport = async () => {
     try {
@@ -126,8 +146,8 @@ export default function EditRelatorioPage() {
       if (reportData.images && reportData.images.length > 0) {
         setImages(reportData.images.map((img: any) => ({
           file: null,
-          caption: img.caption,
-          preview: img.data ? `data:image/jpeg;base64,${img.data}` : '',
+          caption: img.caption || '',
+          preview: img.base64 || (img.data ? `data:image/jpeg;base64,${img.data}` : img.preview || ''),
         })));
       }
     } catch (err) {
@@ -341,8 +361,10 @@ export default function EditRelatorioPage() {
 
       // Show PDF success modal
       setShowPDFSuccessModal(true);
+      showToast('PDF gerado com sucesso!', 'success');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao gerar PDF');
+      showToast('Erro ao gerar PDF', 'error');
     } finally {
       setLoading(false);
     }
@@ -390,34 +412,19 @@ export default function EditRelatorioPage() {
       setReport(updatedReport);
       setHasUnsavedChanges(false);
       setShowSuccessModal(true);
+      showToast('Relatório salvo com sucesso!', 'success');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao salvar relatório');
+      showToast('Erro ao salvar relatório', 'error');
       throw err;
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async () => {
-    if (!report) return;
-    setLoading(true);
-    setError(null);
-
-    try {
-      const res = await fetch(`/api/relatorio/${report.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!res.ok) {
-        throw new Error('Erro ao excluir relatório');
-      }
-
-      router.push('/dashboard');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao excluir relatório');
-    } finally {
-      setLoading(false);
-    }
+  const handleDelete = async (id: string) => {
+    setReportToDelete(id);
+    setShowDeleteModal(true);
   };
 
   const resetForm = () => {
@@ -457,6 +464,34 @@ export default function EditRelatorioPage() {
 
     setHasUnsavedChanges(false);
     setError(null);
+  };
+
+  const confirmDelete = async () => {
+    if (!reportToDelete) return;
+
+    try {
+      const res = await fetch(`/api/relatorio/${reportToDelete}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setReports(reports.filter((r) => r.id !== reportToDelete));
+        setHasUnsavedChanges(false);
+        setPendingNavigation(null);
+        setShowUnsavedModal(false);
+        setShowDeleteModal(false);
+        setReportToDelete(null);
+
+        showToast('Relatório excluído com sucesso!', 'success');
+        router.push('/dashboard');
+      } else {
+        setError('Erro ao excluir relatório');
+        showToast('Erro ao excluir relatório', 'error');
+      }
+    } catch (error) {
+      console.error('Error deleting report:', error);
+      setError('Erro ao excluir relatório');
+      showToast('Erro ao excluir relatório', 'error');
+    }
   };
 
   if (loading) {
@@ -511,7 +546,19 @@ export default function EditRelatorioPage() {
   return (
     <ProtectedRoute>
       <div className="app-layout">
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <Sidebar 
+          isOpen={sidebarOpen} 
+          onClose={() => setSidebarOpen(false)}
+          hasUnsavedChanges={hasUnsavedChanges}
+          onNavigationAttempt={(path) => {
+            if (hasUnsavedChanges) {
+              setPendingNavigation(path);
+              setShowUnsavedModal(true);
+              return false;
+            }
+            return true;
+          }}
+        />
         <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} style={{ display: sidebarOpen ? 'block' : 'none' }}></div>
         <main className="main-content">
           <header className="main-header">
@@ -525,7 +572,7 @@ export default function EditRelatorioPage() {
               </button>
               <div className="header-titles">
                 <h1>Editar Relatório</h1>
-                <p className="subtitle">Dente: {formData.dente} | Data: {new Date(formData.data).toLocaleDateString('pt-BR')}</p>
+                <p className="subtitle">Paciente: {formData.paciente} | Data do Atendimento: {new Date(formData.data).toLocaleDateString('pt-BR')}</p>
               </div>
             </div>
             <div className="header-actions">
@@ -534,40 +581,31 @@ export default function EditRelatorioPage() {
                 className="btn btn-outline"
                 onClick={() => handleNavigation('/dashboard')}
               >
-                Voltar
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+                <span>Voltar</span>
               </button>
               <button
                 type="button"
                 className="btn btn-outline"
-                onClick={resetForm}
+                onClick={() => handleDelete(report.id)}
                 disabled={loading}
+                style={{
+                  border: '1.5px solid #ef4444',
+                  color: '#ef4444',
+                  background: 'transparent',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#ef4444';
+                  e.currentTarget.style.color = 'white';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = '#ef4444';
+                }}
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M3 12a9 9 0 1018 0 9 9 0 0018 0z" />
-                  <path d="M3 12h6" />
-                </svg>
-                <span>Limpar</span>
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={saveReport}
-                disabled={saving || loading}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
-                  <polyline points="17,21 17,13 7,13 7,21" />
-                  <polyline points="7,3 7,8 15,8" />
-                </svg>
-                <span>{saving ? 'Salvando...' : 'Salvar'}</span>
-              </button>
-              <button
-                type="button"
-                className="btn btn-danger"
-                onClick={handleDelete}
-                disabled={loading}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <polyline points="3,6 5,6 21,6" />
                   <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
                 </svg>
@@ -576,14 +614,15 @@ export default function EditRelatorioPage() {
               <button
                 type="button"
                 className="btn btn-primary"
-                onClick={handleGeneratePDF}
-                disabled={loading}
+                onClick={saveReport}
+                disabled={saving || loading}
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                  <polyline points="14,2 14,8 20,8" />
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+                  <polyline points="17,21 17,13 7,13 7,21" />
+                  <polyline points="7,3 7,8 15,8" />
                 </svg>
-                <span>{loading ? 'Gerando...' : 'Gerar PDF'}</span>
+                <span>{saving ? 'Salvando...' : 'Salvar'}</span>
               </button>
             </div>
           </header>
@@ -1051,9 +1090,6 @@ export default function EditRelatorioPage() {
             <button type="button" className="btn btn-outline" onClick={resetForm}>
               Limpar Formulário
             </button>
-            <button type="button" className="btn btn-outline" onClick={saveReport} disabled={saving}>
-              {saving ? 'Salvando...' : 'Salvar'}
-            </button>
             <button type="button" className="btn btn-primary" onClick={handleGeneratePDF} disabled={loading}>
               {loading ? 'Gerando...' : 'Gerar PDF'}
             </button>
@@ -1073,6 +1109,19 @@ export default function EditRelatorioPage() {
         cancelText="Cancelar"
         discardText="Descartar"
         type="warning"
+      />
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setReportToDelete(null);
+        }}
+        onConfirm={confirmDelete}
+        title="Confirmar Exclusão"
+        message="Tem certeza que deseja excluir este relatório? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        type="danger"
       />
       <Modal
         isOpen={showSuccessModal}
